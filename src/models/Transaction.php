@@ -1,20 +1,6 @@
 <?php
 namespace App\Models;
 
-enum TransactionStatus: string
-{
-  case COMPLETED = 'validé';
-  case CANCELED = 'annulé';
-  case PENDING = 'en attente';
-}
-
-enum TransactionType: string
-{
-  case TRANSFER = 'virement';
-  case DEPOSIT = 'dépôt';
-  case WITHDRAWAL = 'retrait';
-}
-
 class Transaction
 {
   public function __construct(

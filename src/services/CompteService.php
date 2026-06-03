@@ -15,16 +15,6 @@ class CompteService
   ) {
   }
 
-  public function createAccount(int $numClient, AccountType $typeCompte, float $soldeInitial = 0): int
-  {
-    $client = $this->clientRepository->findByAccountNumber($numClient);
-    if (!$client) {
-      throw new \Exception("Client $numClient introuvable");
-    }
-
-    return $this->compteRepository->create($numClient, $typeCompte, $soldeInitial);
-  }
-
   public function closeAccount(int $numCompte): void
   {
     $compte = $this->compteRepository->getByNumCompte($numCompte);
@@ -64,4 +54,8 @@ class CompteService
     return $this->clientRepository->findByEmail($email);
   }
 
+  public function createCompte(int $numClient, AccountType $typeCompte, float $soldeInitial): int
+  {
+    return $this->compteRepository->create($numClient, $typeCompte, $soldeInitial);
+  }
 }

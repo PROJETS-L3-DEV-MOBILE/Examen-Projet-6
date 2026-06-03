@@ -1,7 +1,6 @@
 <?php
 namespace App\Services;
 
-use App\Models\TransactionStatus;
 use App\Models\TransactionType;
 use App\Repositories\CompteRepository;
 use App\Repositories\TransactionRepository;
@@ -109,5 +108,21 @@ class TransactionService
       $this->db->rollBack();
       throw $e;
     }
+  }
+
+  // Aliases pour compatibilité
+  public function depot(int $numCompte, float $montant): void
+  {
+    $this->deposit($numCompte, $montant);
+  }
+
+  public function retrait(int $numCompte, float $montant): void
+  {
+    $this->withdraw($numCompte, $montant);
+  }
+
+  public function virement(int $numCompteSource, int $numCompteDestination, float $montant): void
+  {
+    $this->transfer($numCompteSource, $numCompteDestination, $montant);
   }
 }

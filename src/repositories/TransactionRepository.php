@@ -19,10 +19,6 @@ class TransactionRepository
     TransactionType $typeTransaction,
   ): int {
 
-    if ($dateTransaction < new \DateTime()) {
-      throw new \Exception("La date de transaction ne peut pas être dans le passé");
-    }
-
     if ($numCompteSource === null && $typeTransaction !== TransactionType::DEPOSIT) {
       throw new \Exception("Le compte source doit être spécifié pour les transactions autres que les dépôts");
     }
@@ -97,5 +93,62 @@ class TransactionRepository
     ');
     $stmt->execute();
     return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+  }
+
+  public function getByNumCompte(int $numCompte): array
+  {
+    $stmt = $this->db->prepare('
+      SELECT * FROM transactions 
+      WHERE num_compte_source = :num_compte OR num_compte_destination = :num_compte
+      ORDER BY date_transaction DESC
+    ');
+    $stmt->execute([':num_compte' => $numCompte]);
+    return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?? [];
+  }
+
+  public function count(): int
+  {
+    $stmt = $this->db->prepare('SELECT COUNT(*) FROM transactions');
+    $stmt->execute();
+    return (int) $stmt->fetch(\PDO::FETCH_COLUMN);
+  }
+
+  public function getTotalMontant(): float
+  {
+    $stmt = $this->db->prepare('SELECT SUM(montant) FROM transactions WHERE statut_transaction = :statut');
+    $stmt->execute([':statut' => TransactionStatus::COMPLETED->value]);
+    return (float) ($stmt->fetch(\PDO::FETCH_COLUMN) ?? 0);
+  }
+
+  public function countByStatut(string $statut): int
+  {
+    $stmt = $this->db->prepare('SELECT COUNT(*) FROM transactions WHERE statut_transaction = :statut');
+    $stmt->execute([':statut' => $statut]);
+    return (int) $stmt->fetch(\PDO::FETCH_COLUMN);
+  }
+
+  public function countByType(): array
+  {
+    $stmt = $this->db->prepare('
+      SELECT type_transaction, COUNT(*) as nombre, SUM(montant) as montant_total 
+      FROM transactions 
+      WHERE statut_transaction = :statut
+      GROUP BY type_transaction
+    ');
+    $stmt->execute([':statut' => TransactionStatus::COMPLETED->value]);
+    return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?? [];
+  }
+
+  public function countByDay(): array
+  {
+    $stmt = $this->db->prepare('
+      SELECT DATE(date_transaction) as date, COUNT(*) as nombre, SUM(montant) as montant_total 
+      FROM transactions 
+      WHERE statut_transaction = :statut AND date_transaction >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+      GROUP BY DATE(date_transaction)
+      ORDER BY date DESC
+    ');
+    $stmt->execute([':statut' => TransactionStatus::COMPLETED->value]);
+    return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?? [];
   }
 }

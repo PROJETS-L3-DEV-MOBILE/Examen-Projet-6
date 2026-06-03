@@ -70,6 +70,44 @@ class ClientRepository
     return (int) $this->db->lastInsertId();
   }
 
+  public function getAll(): array
+  {
+    $stmt = $this->db->prepare('SELECT * FROM clients');
+    $stmt->execute();
+    return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?? [];
+  }
+
+  public function search(array $criteria): array
+  {
+    $query = 'SELECT * FROM clients WHERE 1=1';
+    $params = [];
+
+    if (!empty($criteria['nom'])) {
+      $query .= ' AND nom LIKE :nom';
+      $params[':nom'] = '%' . $criteria['nom'] . '%';
+    }
+    if (!empty($criteria['prenom'])) {
+      $query .= ' AND prenom LIKE :prenom';
+      $params[':prenom'] = '%' . $criteria['prenom'] . '%';
+    }
+    if (!empty($criteria['email'])) {
+      $query .= ' AND email LIKE :email';
+      $params[':email'] = '%' . $criteria['email'] . '%';
+    }
+    if (!empty($criteria['telephone'])) {
+      $query .= ' AND telephone LIKE :telephone';
+      $params[':telephone'] = '%' . $criteria['telephone'] . '%';
+    }
+    if (!empty($criteria['num_client'])) {
+      $query .= ' AND num_client = :num_client';
+      $params[':num_client'] = (int) $criteria['num_client'];
+    }
+
+    $stmt = $this->db->prepare($query);
+    $stmt->execute($params);
+    return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?? [];
+  }
+
   public function delete(int $numClient): void
   {
     $stmt = $this->db->prepare('DELETE FROM clients WHERE num_client = :num_client');

@@ -13,17 +13,18 @@ class CompteRepository
   {
   }
 
-  public function create(int $numClient, AccountType $typeCompte, float $soldeInitial = 0, AccountStatus $statutCompte = AccountStatus::ACTIVE): int
+  public function create(int $numClient, AccountType $typeCompte, float $soldeInitial, AccountStatus $statutCompte = AccountStatus::ACTIVE): int
   {
     $stmt = $this->db->prepare('
-      INSERT INTO comptes (num_client, type_compte, solde, statut) 
-      VALUES (:num_client, :type_compte, :solde, :statut)'
+      INSERT INTO comptes (num_client, type_compte, solde_actuel, statut_compte, taux_interet) 
+      VALUES (:num_client, :type_compte, :solde, :statut, :taux)'
     );
     $stmt->execute([
       ':num_client' => $numClient,
       ':type_compte' => $typeCompte->value,
       ':solde' => $soldeInitial,
-      ':statut' => $statutCompte->value
+      ':statut' => $statutCompte->value,
+      ':taux' => $typeCompte === AccountType::SAVINGS ? 0.02 : 0.01
     ]);
     return (int) $this->db->lastInsertId();
   }
@@ -38,11 +39,11 @@ class CompteRepository
         (int) $data['num_compte'],
         (int) $data['num_client'],
         AccountType::from($data['type_compte']),
-        (float) $data['solde'],
+        (float) $data['solde_actuel'],
         new \DateTime($data['date_ouverture']),
         isset($data['date_fermeture']) ? new \DateTime($data['date_fermeture']) : null,
         (float) $data['taux_interet'],
-        AccountStatus::from($data['statut'])
+        AccountStatus::from($data['statut_compte'])
       );
     }
     return null;
@@ -50,7 +51,7 @@ class CompteRepository
 
   public function addSolde(int $numCompte, float $montant): void
   {
-    $stmt = $this->db->prepare('UPDATE comptes SET solde = solde + :montant WHERE num_compte = :num_compte');
+    $stmt = $this->db->prepare('UPDATE comptes SET solde_actuel = solde_actuel + :montant WHERE num_compte = :num_compte');
     $stmt->execute([
       ':montant' => $montant,
       ':num_compte' => $numCompte
@@ -59,7 +60,7 @@ class CompteRepository
 
   public function subtractSolde(int $numCompte, float $montant): void
   {
-    $stmt = $this->db->prepare('UPDATE comptes SET solde = solde - :montant WHERE num_compte = :num_compte');
+    $stmt = $this->db->prepare('UPDATE comptes SET solde_actuel = solde_actuel - :montant WHERE num_compte = :num_compte');
     $stmt->execute([
       ':montant' => $montant,
       ':num_compte' => $numCompte
@@ -86,6 +87,12 @@ class CompteRepository
     return (int) $stmt->fetch(\PDO::FETCH_COLUMN);
   }
 
+  public function getAll(): array
+  {
+    $stmt = $this->db->prepare('SELECT * FROM comptes');
+    $stmt->execute();
+    return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?? [];
+  }
 
   public function delete(int $numCompte): void
   {

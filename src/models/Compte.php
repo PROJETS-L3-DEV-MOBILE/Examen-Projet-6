@@ -1,18 +1,6 @@
 <?php
 namespace App\Models;
 
-enum AccountType: string
-{
-  case CHECKING = 'courant';
-  case SAVINGS = 'épargne';
-}
-
-enum AccountStatus: string
-{
-  case ACTIVE = 'actif';
-  case CLOSED = 'fermé';
-}
-
 class Compte
 {
   public function __construct(

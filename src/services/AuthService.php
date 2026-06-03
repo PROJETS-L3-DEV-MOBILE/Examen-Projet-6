@@ -26,7 +26,7 @@ class AuthService
     return isset($_SESSION['num_client']);
   }
 
-  public function login(string $numClient, string $password): bool
+  public function login(int $numClient, string $password): bool
   {
     if (session_status() === PHP_SESSION_NONE) {
       session_start();
